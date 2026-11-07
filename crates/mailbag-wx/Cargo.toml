@@ -1,0 +1,24 @@
+[package]
+name = "mailbag-wx"
+description = "A Report a Problem dialog for wxDragon apps, which sends the user's description and the app's logs to a mailbag server, and offers itself after a crash."
+readme = "../../README.md"
+keywords = ["bug-report", "feedback", "wxdragon", "crash"]
+categories = ["gui", "development-tools::debugging"]
+version.workspace = true
+edition.workspace = true
+# File locking, which tells a crash apart from another copy of the app that is still running.
+rust-version = "1.89"
+license.workspace = true
+repository.workspace = true
+
+[package.metadata.patois]
+translatable = true
+
+[lints]
+workspace = true
+
+[dependencies]
+mailbag = { version = "0.1.0", path = "../mailbag" }
+patois = "0.3.0"
+wx-utils = "0.5.0"
+wxdragon = { version = "0.9.24", default-features = false }

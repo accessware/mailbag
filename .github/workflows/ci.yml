@@ -34,7 +34,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - name: Install wxWidgets build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev pkg-config libgtk-3-dev libpng-dev libjpeg-dev libgl1-mesa-dev libglu1-mesa-dev libxkbcommon-dev libexpat1-dev libtiff-dev
       - uses: Swatinem/rust-cache@v2
+        with:
+          # Keeps the wxWidgets build even when a later step fails.
+          cache-on-failure: true
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
   msrv:
@@ -49,7 +57,8 @@ jobs:
         with:
           toolchain: ${{ steps.msrv.outputs.version }}
       - uses: Swatinem/rust-cache@v2
-      - run: cargo check --all-targets
+      # mailbag-wx needs a newer Rust, for file locking, and is built with the latest in the other jobs.
+      - run: cargo check --all-targets --workspace --exclude mailbag-wx
   docs:
     name: Docs
     runs-on: ubuntu-latest
@@ -58,5 +67,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install wxWidgets build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libclang-dev pkg-config libgtk-3-dev libpng-dev libjpeg-dev libgl1-mesa-dev libglu1-mesa-dev libxkbcommon-dev libexpat1-dev libtiff-dev
       - uses: Swatinem/rust-cache@v2
       - run: cargo doc --no-deps

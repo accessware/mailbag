@@ -6,6 +6,7 @@ Problem reports from desktop apps, emailed to the developer. The app sends a rep
 | --- | --- |
 | `mailbag` | The report: what happened, the app and system it happened on, and the logs. Sends it to a server. |
 | `mailbag-server` | Takes reports over HTTP and emails each one, with its logs attached. |
+| `mailbag-wx` | A Report a Problem dialog for wxDragon apps, offered at the next start after a crash. |
 
 ## Sending a report
 
@@ -25,6 +26,44 @@ report.send("https://reports.example.com/v1/report")?;
 The `send` feature, on by default, adds `Report::send`. Leave it off to use the report type alone.
 
 To check a server end to end, run `cargo run --example send -- https://reports.example.com/v1/report`.
+
+## Adding the dialog to a wxDragon app
+
+`mailbag-wx` gives a wxDragon app a Report a Problem dialog, and offers it at the next start after a crash.
+
+```rust
+let config_dir = homeport::Homeport::new("Paperback").create_config_dir()?;
+let session = mailbag_wx::Session::begin(&config_dir, "paperback");
+// After the main window shows:
+let reporter = mailbag_wx::Reporter::new("Paperback", "1.2.0", "https://reports.example.com/v1/report")
+	.with_log(config_dir.join("paperback.log"))
+	.with_log(config_dir.join("paperback.log.1"));
+reporter.offer_after_crash(&frame, &session);
+// From a Help menu item:
+reporter.show(&frame, false);
+// As the app exits normally:
+session.end();
+```
+
+Pass the folder the app keeps its settings in, such as the one [homeport](https://github.com/accessware/homeport) finds, so a portable copy keeps these files beside it.
+
+### The dialog
+
+- It asks what happened, and for an email address if the user wants a reply.
+- Include the log is checked when a log exists. Unchecking it leaves the logs out.
+- Preview shows the whole report, exactly as it will be sent.
+- Send shows a progress window, then a thank-you. An email address whose domain doesn't take email is refused, and the user is put back in that field to fix it.
+- If sending fails, or the server's daily limit is reached, the user can save the report to a text file and send it another way.
+- Every string is translated with patois 0.3. The app must use the same version of patois.
+
+### After a crash
+
+`Session::begin` marks the run as running, and `end` clears the mark. A mark left at the next start means the last run crashed, was killed, or lost power, and `offer_after_crash` asks whether to report the problem. A report sent from there is marked as a crash.
+
+- The marker stays locked while the app runs, so a second copy of the app doesn't mistake the first for a crash.
+- The question has a Don't ask again check box. The session remembers it in a file next to the marker, so the app doesn't need a setting for it. To offer a setting that turns the question back on, call `session.set_asks_after_crash(true)`.
+
+To try the dialog, run `cargo run -p mailbag-wx --example report -- https://reports.example.com/v1/report`. Choose Simulate a Crash, then run it again, to see the question asked after a crash.
 
 ## Running the server
 
