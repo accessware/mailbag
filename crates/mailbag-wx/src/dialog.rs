@@ -6,9 +6,9 @@ use std::{
 use mailbag::{Report, SendError};
 use patois::t;
 use wx_utils::{
-	add_single_button_footer, add_yes_no_footer, build_yes_no_buttons, confirm, dialog_padding,
-	progress::{Ended, run_with_progress},
-	show_error, show_info,
+	add_yes_no_footer, build_yes_no_buttons, confirm, dialog_padding,
+	progress::{Ended, run_without_estimate},
+	show_error, show_info, show_text,
 };
 use wxdragon::prelude::*;
 
@@ -87,6 +87,8 @@ impl Reporter {
 		add_yes_no_footer(content, yes_button, no_button);
 		dialog.set_sizer_and_fit(content, true);
 		dialog.centre();
+		// Otherwise the check box, the first control that takes focus, would have it.
+		yes_button.set_focus();
 		let report = dialog.show_modal() == ID_YES;
 		if dont_ask.is_checked() {
 			session.set_asks_after_crash(false);
@@ -160,7 +162,10 @@ impl Reporter {
 		dialog.set_sizer_and_fit(content, true);
 		let form = Form { reporter: self.clone(), crashed, description, email, include_logs };
 		let preview_form = form.clone();
-		preview_button.on_click(move |_| show_preview(dialog, &preview_form.report()));
+		preview_button.on_click(move |_| {
+			// TRANSLATORS: Title of the window that shows a problem report before it is sent
+			show_text(&dialog, &t("Report Preview"), &preview_form.report().to_text());
+		});
 		send_button.on_click(move |_| send(dialog, &form));
 		dialog.centre();
 		description.set_focus();
@@ -221,10 +226,9 @@ fn send(dialog: Dialog, form: &Form) {
 	let endpoint = form.reporter.endpoint.clone();
 	let to_send = report.clone();
 	let email = form.email;
-	run_with_progress(
+	run_without_estimate(
 		&dialog,
-		// TRANSLATORS: Title of the progress window shown while a problem report is sent
-		&t("Sending Report"),
+		&t("Report a Problem"),
 		// TRANSLATORS: Message in the progress window shown while a problem report is sent
 		&t("Sending the report..."),
 		move |_| to_send.send(&endpoint),
@@ -235,8 +239,8 @@ fn send(dialog: Dialog, form: &Form) {
 			match result {
 				Ok(()) => {
 					// TRANSLATORS: Shown after a problem report was sent
-					// TRANSLATORS: Title of the message shown after a problem report was sent
-					show_info(&dialog, t("Thank you. Your report was sent."), &t("Report Sent"));
+					// TRANSLATORS: Title of a message saying something worked
+					show_info(&dialog, t("Thank you. Your report was sent."), &t("Success"));
 					dialog.end_modal(ID_OK);
 				}
 				Err(SendError::ReplyAddressTakesNoMail) => {
@@ -273,8 +277,7 @@ fn offer_to_save(dialog: Dialog, report: &Report, problem: &str) {
 	// TRANSLATORS: Asked after a problem report couldn't be sent. %s explains what went wrong.
 	let question = t("%s\n\nWould you like to save the report to a file, so you can send it another way?")
 		.replacen("%s", problem, 1);
-	// TRANSLATORS: Title of the question asked after a problem report couldn't be sent
-	if !confirm(&dialog, question, &t("Report Not Sent")) {
+	if !confirm(&dialog, question, &t("Error")) {
 		return;
 	}
 	let file_dialog = FileDialog::builder(&dialog)
@@ -292,8 +295,7 @@ fn offer_to_save(dialog: Dialog, report: &Report, problem: &str) {
 	match fs::write(Path::new(&path), report.to_text()) {
 		Ok(()) => {
 			// TRANSLATORS: Shown after a problem report was saved to a file
-			// TRANSLATORS: Title of the message shown after a problem report was saved to a file
-			show_info(&dialog, t("The report was saved."), &t("Report Saved"));
+			show_info(&dialog, t("The report was saved."), &t("Success"));
 			dialog.end_modal(ID_OK);
 		}
 		// TRANSLATORS: Shown when saving a problem report to a file failed. %s is the reason.
@@ -301,26 +303,4 @@ fn offer_to_save(dialog: Dialog, report: &Report, problem: &str) {
 			show_error(&dialog, t("The report couldn't be saved: %s").replacen("%s", &e.to_string(), 1), &t("Error"));
 		}
 	}
-}
-
-fn show_preview(parent: Dialog, report: &Report) {
-	// TRANSLATORS: Title of the window that shows a problem report before it is sent
-	let dialog = Dialog::builder(&parent, &t("Report Preview")).build();
-	let padding = dialog_padding(&dialog);
-	let text = TextCtrl::builder(&dialog)
-		.with_value(&report.to_text())
-		.with_style(TextCtrlStyle::MultiLine | TextCtrlStyle::ReadOnly | TextCtrlStyle::Rich2)
-		.with_size(dialog.from_dip(Size::new(520, 360)))
-		.build();
-	// TRANSLATORS: Button that closes the report preview
-	let close_button = Button::builder(&dialog).with_id(ID_CANCEL).with_label(&t("Close")).build();
-	dialog.set_escape_id(ID_CANCEL);
-	let content = BoxSizer::builder(Orientation::Vertical).build();
-	content.add(&text, 1, SizerFlag::Expand | SizerFlag::All, padding);
-	add_single_button_footer(content, close_button);
-	dialog.set_sizer_and_fit(content, true);
-	dialog.centre();
-	text.set_focus();
-	dialog.show_modal();
-	dialog.destroy();
 }

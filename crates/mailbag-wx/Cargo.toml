@@ -20,5 +20,5 @@ workspace = true
 [dependencies]
 mailbag = { version = "0.1.0", path = "../mailbag" }
 patois = "0.3.0"
-wx-utils = "0.5.0"
+wx-utils = "0.5.1"
 wxdragon = { version = "0.9.24", default-features = false }

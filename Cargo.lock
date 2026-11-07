@@ -2409,9 +2409,9 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "wx-utils"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f8035f89a4f38a6bc610fad28d161818992ee5d67fb8f1905e150a780546005"
+checksum = "a7d51e4c928c45bd2ad36f334cd0677d5b06a95ff0099a1f4d4358f2a11859c5"
 dependencies = [
  "patois",
  "wxdragon",
