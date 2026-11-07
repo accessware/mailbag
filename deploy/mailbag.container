@@ -1,0 +1,16 @@
+# A rootless Quadlet unit: copy to ~/.config/containers/systemd/, then run systemctl --user daemon-reload and systemctl --user start mailbag.
+[Unit]
+Description=mailbag problem report relay
+
+[Container]
+Image=localhost/mailbag-server:latest
+Network=host
+EnvironmentFile=%h/.config/mailbag/mailbag.env
+Secret=mailbag-smtp-password,type=mount,target=/run/secrets/mailbag-smtp-password
+Environment=MAILBAG_SMTP_PASSWORD_FILE=/run/secrets/mailbag-smtp-password
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

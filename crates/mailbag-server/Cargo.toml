@@ -1,0 +1,30 @@
+[package]
+name = "mailbag-server"
+description = "Receives mailbag problem reports over HTTPS and emails each one to the developer."
+readme = "../../README.md"
+keywords = ["bug-report", "feedback", "email", "server"]
+categories = ["development-tools::debugging", "email"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+axum = "0.8.9"
+hickory-resolver = "0.26.3"
+ipnet = "2.12.2"
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "ring", "webpki-roots"] }
+mailbag = { version = "0.1.0", path = "../mailbag", default-features = false }
+serde_json = "1.0.154"
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "net", "signal", "time"] }
+tower-http = { version = "0.7.1", features = ["decompression-gzip", "limit"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+
+[dev-dependencies]
+flate2 = "1.1.11"
+tower = { version = "0.5.3", features = ["util"] }

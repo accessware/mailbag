@@ -1,0 +1,18 @@
+# Build from the repository root: podman build -f deploy/Containerfile -t mailbag-server .
+FROM docker.io/library/alpine:3.22.2 AS runtime-build
+RUN mkdir -p /runtime/etc/apk && \
+    cp -a /etc/apk/repositories /etc/apk/keys /runtime/etc/apk && \
+    apk --root /runtime --initdb --no-cache add alpine-baselayout-data alpine-release musl libgcc
+
+FROM docker.io/library/rust:1.99-alpine3.22 AS build
+RUN apk add --no-cache build-base
+ENV RUSTFLAGS="-Ctarget-feature=-crt-static"
+WORKDIR /app
+ADD . .
+RUN cargo build --release --locked -p mailbag-server
+
+FROM scratch
+COPY --from=runtime-build /runtime /
+COPY --from=build /app/target/release/mailbag-server /usr/local/bin/
+USER nobody
+CMD ["mailbag-server"]

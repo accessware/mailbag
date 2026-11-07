@@ -1,0 +1,18 @@
+[workspace]
+resolver = "3"
+members = ["crates/mailbag", "crates/mailbag-server"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+repository = "https://github.com/accessware/mailbag"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# axum and lettre pull in two major versions of syn and windows-sys, which only their releases can fix.
+multiple_crate_versions = "allow"

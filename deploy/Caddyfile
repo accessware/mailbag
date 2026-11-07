@@ -1,0 +1,4 @@
+# Add to the server's Caddyfile. Caddy gets the certificate and puts the client's address in X-Forwarded-For.
+reports.example.com {
+	reverse_proxy 127.0.0.1:8025
+}

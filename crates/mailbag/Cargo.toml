@@ -1,0 +1,28 @@
+[package]
+name = "mailbag"
+description = "Problem reports from desktop apps: what happened, the app and system it happened on, and the logs, sent to a mailbag server that emails them to the developer."
+readme = "../../README.md"
+keywords = ["bug-report", "feedback", "desktop", "crash"]
+categories = ["development-tools::debugging"]
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = ["send"]
+# Sending a report to a server. The server itself only needs the report type.
+send = ["dep:flate2", "dep:serde_json", "dep:ureq"]
+
+[lints]
+workspace = true
+
+[dependencies]
+flate2 = { version = "1.1.11", optional = true }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", optional = true }
+ureq = { version = "3.5.1", default-features = false, features = ["rustls"], optional = true }
+
+[dev-dependencies]
+serde_json = "1.0.154"
